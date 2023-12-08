@@ -78,7 +78,7 @@ async function getUserConnectionRequests(req, res, next) {
     const userId = req.user.id;
 
     // get all the requests the particular token validated user got
-    var result = await db.query("SELECT * FROM  requests where sentto = $1", [userId]);
+    var result = await db.query("SELECT * FROM  connections where sentto = $1 AND accepted = FALSE", [userId]);
     res.status(200).send(result.rows);
   } catch (e) {
     console.log(e);
@@ -98,22 +98,58 @@ async function sendConnectionRequest(req, res, next) {
     }
 
     // check if user has already sent the request
-    var isRequestSent = await db.query("SELECT * FROM requests where sentby = $1 and sentto = $2", [userId, connectionSentToUserId]);
+    var isRequestSent = await db.query("SELECT * FROM connections where (sentby = $1 and sentto = $2) OR (sentby = $3 and sentto = $4)", [
+      userId,
+      connectionSentToUserId,
+      connectionSentToUserId,
+      userId,
+    ]);
     if (isRequestSent.rows.length) {
-      return next(createError(409, "you already sent request to this user"));
+      return next(createError(409, "you already sent request to this user or the user has already tried to send request"));
     }
 
     // insert a connection request
-    var result = await db.query("INSERT INTO requests (sentby, sentto, timestamp) VALUES ($1, $2, $3)", [userId, connectionSentToUserId, parseInt(Date.now() / 1000)]);
+    var result = await db.query("INSERT INTO connections (sentby, sentto, timestamp, accepted) VALUES ($1, $2, $3, $4)", [userId, connectionSentToUserId, parseInt(Date.now() / 1000), false]);
     console.log(result.rowCount);
     if (!result.rowCount) {
       return next(createError("couldn't send request"));
     }
 
-    res.status(201).send({ message: "ok", acknowledged: true, dataInserted: result.rowCount });
+    res.status(201).send({ message: "request sent", acknowledged: true, dataInserted: result.rowCount });
   } catch (e) {
     next(e);
   }
 }
 
-module.exports = { getUsers, signup, login, getUserConnectionRequests, sendConnectionRequest };
+async function acceptRequest(req, res, next) {
+  try {
+    const userId = req.user.id;
+    const connectionId = req.params.id;
+
+    // check if connection exists
+    var connection = await db.query("SELECT * FROM connections where id = $1", [connectionId]);
+    if (!connection.rows.length) {
+      return next(createError(404, "No connection found with the given id"));
+    }
+
+    connection = connection.rows[0];
+    console.log(connection);
+
+    // check if user has the permission to accept request
+    if (connection.sentto != userId) {
+      return next(createError(400, `you don't permission to accept this connection`));
+    }
+
+    // make accepted to true
+    var acceptRequest = await db.query("update connections set accepted = true where id = $1", [connectionId]);
+    if (!acceptRequest.rowCount) {
+      return next(createError(`couldn't accept request`));
+    }
+
+    res.status(200).send({ message: "request accepted", acknowledged: true, updatedCount: result.rowCount });
+  } catch (e) {
+    next(e);
+  }
+}
+
+module.exports = { getUsers, signup, login, getUserConnectionRequests, sendConnectionRequest, acceptRequest };

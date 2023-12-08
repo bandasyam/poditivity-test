@@ -6,7 +6,7 @@ const { db } = require("../database/database.connection");
 module.exports.createToken = (payload, expiresIn = 60 * 60 * 24 * 7) => {
   return jwt.sign(payload, "jwtsecret", { expiresIn });
 };
-
+console.log(this.createToken({ email: "siva@gmail.com" }));
 module.exports.validateToken = async (req, res, next) => {
   try {
     // get the token from headers
