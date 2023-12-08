@@ -11,4 +11,7 @@ router.get("/", controller.getUsers);
 /** signup api */
 router.post("/signup", validator(schema.signupSchema), controller.signup);
 
+/** login api */
+router.post("/login", validator(schema.loginSchema), controller.login);
+
 module.exports = router;

@@ -19,7 +19,7 @@ async function signup(req, res, next) {
     // check if user already exists with the given email
     var emailExists = await db.query("SELECT * FROM USERS WHERE email=$1", [email]);
     if (emailExists.rows.length) {
-      return next(createError(400, `${email} already exists`));
+      return next(createError(409, `${email} already exists`));
     }
 
     // hash the password
@@ -40,4 +40,30 @@ async function signup(req, res, next) {
   }
 }
 
-module.exports = { getUsers, signup };
+async function login(req, res, next) {
+  try {
+    const email = req.body.email;
+
+    // check if exists
+    var emailExists = await db.query("SELECT * FROM USERS WHERE email=$1", [email]);
+    if (!emailExists.rows.length) {
+      return next(createError(400, `${email} doesn't exists`));
+    }
+
+    // get the data
+    var userObject = emailExists.rows[0];
+
+    // compare the hashed password
+    const validPassword = await bcrypt.compare(req.body.password, userObject.password);
+    if (!validPassword) {
+      return next(createError(400, `incorrect password`));
+    }
+
+    // send response
+    res.status(200).send(userObject);
+  } catch (e) {
+    next(e);
+  }
+}
+
+module.exports = { getUsers, signup, login };

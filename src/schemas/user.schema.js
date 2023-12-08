@@ -5,3 +5,8 @@ module.exports.signupSchema = joi.object({
   password: joi.string().required(),
   userName: joi.string().required(),
 });
+
+module.exports.loginSchema = joi.object({
+  email: joi.string().required(),
+  password: joi.string().required(),
+});
