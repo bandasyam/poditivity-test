@@ -15,4 +15,10 @@ router.post("/signup", bodyValidator(schema.signupSchema), controller.signup);
 /** login api */
 router.post("/login", bodyValidator(schema.loginSchema), controller.login);
 
+/** get my connect requests */
+router.get("/connection-requests", validateToken, controller.getUserConnectionRequests);
+
+/** send connect requests */
+router.post("/connection-request", validateToken, bodyValidator(schema.sendRequestSchema), controller.sendConnectionRequest);
+
 module.exports = router;

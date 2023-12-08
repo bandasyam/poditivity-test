@@ -25,6 +25,7 @@ module.exports.validateToken = async (req, res, next) => {
     }
 
     req.user = user.rows[0];
+    next();
   } catch (e) {
     if (e.message.includes("jwt")) {
       next(createError("Token expired. Login again", 401));

@@ -1,5 +1,8 @@
 const { Client } = require("pg");
 
+// I am considering all the required database and required are created
+// while insert data functions like signup or requests we can do is if not table and then create
+
 const db = new Client({
   user: "postgres",
   host: "localhost",

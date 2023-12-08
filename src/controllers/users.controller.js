@@ -33,6 +33,9 @@ async function signup(req, res, next) {
     // insert into database
     var result = await db.query("INSERT INTO USERS (email, password, username, timestamp) VALUES ($1, $2, $3, $4)", [email, hashedPassword, req.body.userName, timestamp]);
     console.log(result.rowCount);
+    if (!result.rowCount) {
+      return next(createError("couln't signup"));
+    }
 
     res.status(201).send({ message: "ok", acknowledged: true, dataInserted: result.rowCount });
   } catch (e) {
@@ -70,4 +73,47 @@ async function login(req, res, next) {
   }
 }
 
-module.exports = { getUsers, signup, login };
+async function getUserConnectionRequests(req, res, next) {
+  try {
+    const userId = req.user.id;
+
+    // get all the requests the particular token validated user got
+    var result = await db.query("SELECT * FROM  requests where sentto = $1", [userId]);
+    res.status(200).send(result.rows);
+  } catch (e) {
+    console.log(e);
+    next(e);
+  }
+}
+
+async function sendConnectionRequest(req, res, next) {
+  try {
+    const userId = req.user.id;
+    const connectionSentToUserId = req.body.connectionSentToUserId;
+
+    // check if the user whom are sending request exists
+    var isUser = await db.query("SELECT * FROM users where id = $1", [connectionSentToUserId]);
+    if (!isUser.rows.length) {
+      return next(createError(404, "The user you are trying to send request not found"));
+    }
+
+    // check if user has already sent the request
+    var isRequestSent = await db.query("SELECT * FROM requests where sentby = $1 and sentto = $2", [userId, connectionSentToUserId]);
+    if (isRequestSent.rows.length) {
+      return next(createError(409, "you already sent request to this user"));
+    }
+
+    // insert a connection request
+    var result = await db.query("INSERT INTO requests (sentby, sentto, timestamp) VALUES ($1, $2, $3)", [userId, connectionSentToUserId, parseInt(Date.now() / 1000)]);
+    console.log(result.rowCount);
+    if (!result.rowCount) {
+      return next(createError("couldn't send request"));
+    }
+
+    res.status(201).send({ message: "ok", acknowledged: true, dataInserted: result.rowCount });
+  } catch (e) {
+    next(e);
+  }
+}
+
+module.exports = { getUsers, signup, login, getUserConnectionRequests, sendConnectionRequest };
