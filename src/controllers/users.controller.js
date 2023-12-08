@@ -1,3 +1,5 @@
+const createError = require("http-errors");
+const bcrypt = require("bcrypt");
 const { db } = require("../database/database.connection");
 
 async function getUsers(req, res, next) {
@@ -10,4 +12,32 @@ async function getUsers(req, res, next) {
   }
 }
 
-module.exports = { getUsers };
+async function signup(req, res, next) {
+  try {
+    const email = req.body.email;
+
+    // check if user already exists with the given email
+    var emailExists = await db.query("SELECT * FROM USERS WHERE email=$1", [email]);
+    if (emailExists.rows.length) {
+      return next(createError(400, `${email} already exists`));
+    }
+
+    // hash the password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(req.body.password, salt);
+
+    req.body.password = hashedPassword;
+    var timestamp = parseInt(Date.now() / 1000);
+
+    // insert into database
+    var result = await db.query("INSERT INTO USERS (email, password, username, timestamp) VALUES ($1, $2, $3, $4)", [email, hashedPassword, req.body.userName, timestamp]);
+    console.log(result.rowCount);
+
+    res.status(201).send({ message: "ok", acknowledged: true, dataInserted: result.rowCount });
+  } catch (e) {
+    console.log(e);
+    next(e);
+  }
+}
+
+module.exports = { getUsers, signup };

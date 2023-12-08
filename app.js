@@ -4,7 +4,7 @@ var path = require("path");
 var cookieParser = require("cookie-parser");
 var logger = require("morgan");
 
-var usersRouter = require("./src/routes/users");
+var usersRouter = require("./src/routes/user.route");
 
 const db = require("./src/database/database.connection");
 db.connectDb();
@@ -34,9 +34,11 @@ app.use(function (err, req, res, next) {
   res.locals.message = err.message;
   res.locals.error = req.app.get("env") === "development" ? err : {};
 
-  // render the error page
-  res.status(err.status || 500);
-  res.render("error");
+  var status = err.status || 500;
+  var message = err.message || "message undefined";
+
+  // send error
+  res.status(status).send({ message: message });
 });
 
 module.exports = app;
