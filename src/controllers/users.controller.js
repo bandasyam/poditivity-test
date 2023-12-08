@@ -1,6 +1,7 @@
 const createError = require("http-errors");
 const bcrypt = require("bcrypt");
 const { db } = require("../database/database.connection");
+const { createToken } = require("../middlewares/tokenValidator.middleware");
 
 async function getUsers(req, res, next) {
   try {
@@ -58,6 +59,9 @@ async function login(req, res, next) {
     if (!validPassword) {
       return next(createError(400, `incorrect password`));
     }
+
+    // set token in headers
+    res.header("token", createToken({ email: userObject.email }));
 
     // send response
     res.status(200).send(userObject);
