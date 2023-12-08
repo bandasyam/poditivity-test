@@ -142,11 +142,12 @@ async function acceptRequest(req, res, next) {
 
     // make accepted to true
     var acceptRequest = await db.query("update connections set accepted = true where id = $1", [connectionId]);
+    console.log(acceptRequest);
     if (!acceptRequest.rowCount) {
       return next(createError(`couldn't accept request`));
     }
 
-    res.status(200).send({ message: "request accepted", acknowledged: true, updatedCount: result.rowCount });
+    res.status(200).send({ message: "request accepted", acknowledged: true, updatedCount: acceptRequest.rowCount });
   } catch (e) {
     next(e);
   }
