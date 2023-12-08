@@ -91,6 +91,11 @@ async function sendConnectionRequest(req, res, next) {
     const userId = req.user.id;
     const connectionSentToUserId = req.body.connectionSentToUserId;
 
+    // user cannot send request to himself
+    if (userId == connectionSentToUserId) {
+      return next(createError(400, "you cannot send request to yourself"));
+    }
+
     // check if the user whom are sending request exists
     var isUser = await db.query("SELECT * FROM users where id = $1", [connectionSentToUserId]);
     if (!isUser.rows.length) {
