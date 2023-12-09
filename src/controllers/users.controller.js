@@ -169,4 +169,16 @@ async function getConnections(req, res, next) {
   }
 }
 
-module.exports = { getUsers, signup, login, getUserConnectionRequests, sendConnectionRequest, acceptRequest, getConnections };
+async function getMessagesFromConnection(req, res, next) {
+  try {
+    const userId = req.user.id;
+    const connectionId = req.params.id;
+
+    var messages = await db.query("select * from messages where connection id = $1", [connectionId]);
+    res.status(200).send(messages.rows);
+  } catch (e) {
+    next(e);
+  }
+}
+
+module.exports = { getUsers, signup, login, getUserConnectionRequests, sendConnectionRequest, acceptRequest, getConnections, getMessagesFromConnection };

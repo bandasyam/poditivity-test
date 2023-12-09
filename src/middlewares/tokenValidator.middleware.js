@@ -45,3 +45,29 @@ const decodeToken = (token) => {
     throw e;
   }
 };
+
+module.exports.decodeSocketToken = async (socket) => {
+  const token = socket.handshake.headers.token;
+  if (!token) {
+    throw new Error(JSON.stringify({ message: "no token found", statusCode: 401 }));
+  }
+
+  try {
+    var decoded = jwt.verify(token, "jwtsecret");
+
+    // check if user exists
+    var user = await db.query("select * from users where email = $1", [decoded.email]);
+    if (!user.rows.length) {
+      throw new Error(JSON.stringify({ message: "user not found", statusCode: 404 }));
+    }
+
+    socket.user = user.rows[0];
+  } catch (e) {
+    console.log(e);
+    if (e.message.includes("jwt")) {
+      throw new Error(JSON.stringify({ message: "token expired. Login again", statusCode: 401 }));
+    } else {
+      throw new Error(JSON.stringify({ message: e.messgae }));
+    }
+  }
+};

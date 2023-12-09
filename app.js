@@ -3,8 +3,11 @@ var express = require("express");
 var path = require("path");
 var cookieParser = require("cookie-parser");
 var logger = require("morgan");
+const io = require("socket.io")();
 
 var usersRouter = require("./src/routes/user.route");
+var { socketEventManagment } = require("./src/routes/user.soket.route");
+const { decodeSocketToken } = require("./src/middlewares/tokenValidator.middleware");
 
 const db = require("./src/database/database.connection");
 db.connectDb();
@@ -40,5 +43,24 @@ app.use(function (err, req, res, next) {
   // send error
   res.status(status).send({ message: message });
 });
+
+// sockets
+// decode socket token
+io.use((socket, next) => {
+  try {
+    decodeSocketToken(socket);
+    next();
+  } catch (e) {
+    console.log("1");
+    return next(e);
+  }
+});
+
+io.on("connection", (socket) => {
+  io.to(socket.id).emit("connection", { status: 200, message: `You are connected` });
+  socketEventManagment(io, socket);
+});
+
+io.listen(3080);
 
 module.exports = app;

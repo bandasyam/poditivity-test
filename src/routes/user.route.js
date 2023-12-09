@@ -27,4 +27,7 @@ router.patch("/connection-request/:id", validateToken, controller.acceptRequest)
 /** get firends or accepted connection list */
 router.get("/connections", validateToken, controller.getConnections);
 
+/** get messages */
+router.get("/messages/:id", validateToken, controller.getMessagesFromConnection);
+
 module.exports = router;
