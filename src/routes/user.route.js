@@ -15,13 +15,16 @@ router.post("/signup", bodyValidator(schema.signupSchema), controller.signup);
 /** login api */
 router.post("/login", bodyValidator(schema.loginSchema), controller.login);
 
-/** get my connect requests */
-router.get("/connection-requests", validateToken, controller.getUserConnectionRequests);
-
 /** send connect requests */
 router.post("/connection-request", validateToken, bodyValidator(schema.sendRequestSchema), controller.sendConnectionRequest);
 
+/** get my connect requests */
+router.get("/connection-requests", validateToken, controller.getUserConnectionRequests);
+
 /** accept a request */
 router.patch("/connection-request/:id", validateToken, controller.acceptRequest);
+
+/** get firends or accepted connection list */
+router.get("/connections", validateToken, controller.getConnections);
 
 module.exports = router;

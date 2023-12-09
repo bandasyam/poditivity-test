@@ -73,19 +73,6 @@ async function login(req, res, next) {
   }
 }
 
-async function getUserConnectionRequests(req, res, next) {
-  try {
-    const userId = req.user.id;
-
-    // get all the requests the particular token validated user got
-    var result = await db.query("SELECT * FROM  connections where sentto = $1 AND accepted = FALSE", [userId]);
-    res.status(200).send(result.rows);
-  } catch (e) {
-    console.log(e);
-    next(e);
-  }
-}
-
 async function sendConnectionRequest(req, res, next) {
   try {
     const userId = req.user.id;
@@ -126,6 +113,19 @@ async function sendConnectionRequest(req, res, next) {
   }
 }
 
+async function getUserConnectionRequests(req, res, next) {
+  try {
+    const userId = req.user.id;
+
+    // get all the requests the particular token validated user got
+    var result = await db.query("SELECT * FROM  connections where sentto = $1 AND accepted = FALSE", [userId]);
+    res.status(200).send(result.rows);
+  } catch (e) {
+    console.log(e);
+    next(e);
+  }
+}
+
 async function acceptRequest(req, res, next) {
   try {
     const userId = req.user.id;
@@ -158,4 +158,15 @@ async function acceptRequest(req, res, next) {
   }
 }
 
-module.exports = { getUsers, signup, login, getUserConnectionRequests, sendConnectionRequest, acceptRequest };
+async function getConnections(req, res, next) {
+  try {
+    const userId = req.user.id;
+
+    var connections = await db.query("SELECT * from connections where (accepted = true) AND (sentby = $1 OR sentto = $2)", [userId, userId]);
+    res.status(200).send(connections.rows);
+  } catch (e) {
+    next(e);
+  }
+}
+
+module.exports = { getUsers, signup, login, getUserConnectionRequests, sendConnectionRequest, acceptRequest, getConnections };
